@@ -68,7 +68,6 @@ const LoginPage = () => {
           email: user.email,
           name: user.displayName,
           role: res.data.role,
-          // course_code: res.data.course_code,
           photoURL: user.photoURL,
         }));
         const user1 = JSON.parse(localStorage.getItem("user"));

@@ -3,7 +3,7 @@ import axios from "axios";
 import { QrCode, Loader2, Clock, Copy, Check } from "lucide-react";
 import AdminNavBar from "./AdminNavBar";
 
-function AdminDashboard() {
+function AdminHome() {
   const [qrImage, setQrImage] = useState(null);
   const [sessionId, setSessionId] = useState("");
   const [otp, setOtp] = useState("");
@@ -24,10 +24,9 @@ function AdminDashboard() {
   const generateQRCode = async () => {
     const now = new Date();
     const startTime = new Date();
-    startTime.setHours(8, 45, 0); // 8:45 AM
+    startTime.setHours(8, 45, 0); 
     const endTime = new Date();
-    endTime.setHours(24, 30, 0); // 4:30 PM
-
+    endTime.setHours(16, 30, 0); 
     if (now < startTime || now > endTime) {
       alert("QR code can only be generated between 8:45 AM and 4:30 PM.");
       return;
@@ -46,7 +45,6 @@ function AdminDashboard() {
       localStorage.setItem("sessionid", sessionId);
       setIsSessionCreated(true);
 
-      // Start 30-second timer
       let count = 30;
       setTimer(count);
       const countdown = setInterval(() => {
@@ -73,32 +71,27 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f0f8ff]">
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <AdminNavBar />
       </div>
 
-      <main className="py-8 px-4 max-w-4xl mx-auto">
+      <main className="py-6 px-4 max-w-5xl mx-auto">
         <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-          {/* Header */}
-          <div className="px-6 py-5 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-5 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
                 <QrCode size={24} />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-gray-800">Attendance Session</h1>
-                <p className="text-gray-500 text-sm">
-                  Generate QR codes for student attendance
-                </p>
+                <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">Attendance Session</h1>
+                <p className="text-gray-500 text-sm">Generate QR codes for student attendance</p>
               </div>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="space-y-6">
-              {/* Generate Button */}
               <button
                 onClick={generateQRCode}
                 disabled={isSessionCreated || isLoading}
@@ -122,11 +115,10 @@ function AdminDashboard() {
                 )}
               </button>
 
-              {/* QR Code Display */}
               {qrImage && (
                 <div className="space-y-6">
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                       <h3 className="font-medium text-gray-800">QR Code</h3>
                       {timer !== null && (
                         <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -139,21 +131,18 @@ function AdminDashboard() {
                       <img
                         src={qrImage}
                         alt="Generated QR Code"
-                        className="w-64 h-64 rounded-lg border border-gray-200 p-2"
+                        className="w-48 sm:w-64 h-48 sm:h-64 rounded-lg border border-gray-200 p-2"
                       />
                     </div>
                   </div>
 
-                  {/* Session Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="border border-gray-200 rounded-lg p-4">
                       <h3 className="font-medium text-gray-800 mb-2">Session ID</h3>
                       <div className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
-                        <code className="text-sm font-mono text-gray-700 truncate">
-                          {sessionId}
-                        </code>
+                        <code className="text-sm font-mono text-gray-700 truncate">{sessionId}</code>
                         <button
-                          onClick={() => copyToClipboard(sessionId, 'sessionId')}
+                          onClick={() => copyToClipboard(sessionId, "sessionId")}
                           className="text-gray-500 hover:text-blue-600 transition-colors"
                         >
                           {copied.sessionId ? <Check size={16} /> : <Copy size={16} />}
@@ -164,11 +153,9 @@ function AdminDashboard() {
                     <div className="border border-gray-200 rounded-lg p-4">
                       <h3 className="font-medium text-gray-800 mb-2">OTP Code</h3>
                       <div className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
-                        <code className="text-sm font-mono text-red-600 font-bold">
-                          {otp}
-                        </code>
+                        <code className="text-sm font-mono text-red-600 font-bold">{otp}</code>
                         <button
-                          onClick={() => copyToClipboard(otp, 'otp')}
+                          onClick={() => copyToClipboard(otp, "otp")}
                           className="text-gray-500 hover:text-blue-600 transition-colors"
                         >
                           {copied.otp ? <Check size={16} /> : <Copy size={16} />}
@@ -195,4 +182,4 @@ function AdminDashboard() {
   );
 }
 
-export default AdminDashboard;
+export default AdminHome;

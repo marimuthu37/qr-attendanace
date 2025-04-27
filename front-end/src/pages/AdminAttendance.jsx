@@ -11,9 +11,8 @@ function AdminAttendance() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const session = localStorage.getItem("sessionid")
-  const [sessionId, setSessionId] = useState(session); // Default session_id for automatic fetch
+  const [sessionId, setSessionId] = useState(session); 
 
-  // Automatically fetch attendance when the component mounts
   useEffect(() => {
     if (sessionId) {
       fetchAttendance();
@@ -78,13 +77,12 @@ function AdminAttendance() {
     : data.records;
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      {/* Navbar */}
+    <div className="flex flex-col min-h-screen bg-[#f0f8ff]">
+
       <div className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm border-b">
         <AdminNavBar />
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 py-10 px-4 pt-28">
         <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl border border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -99,14 +97,8 @@ function AdminAttendance() {
                 placeholder="Enter Session ID"
                 value={sessionId}
                 onChange={(e) => setSessionId(e.target.value)}
-                className="border px-3 py-2 rounded-md text-sm w-60"
+                className="border px-3 py-2 rounded-md text-sm w-full sm:w-60"
               />
-              <button
-                onClick={fetchAttendance}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                Load Attendance
-              </button>
               <button
                 onClick={() => setShowCalendarModal(true)}
                 className="flex items-center gap-2 text-blue-600 font-medium border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
@@ -125,10 +117,9 @@ function AdminAttendance() {
             </div>
           </div>
 
-          {/* Calendar Modal */}
           {showCalendarModal && (
             <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-xl shadow-lg relative max-w-sm w-full mx-4">
+              <div className="bg-white p-6 rounded-xl shadow-lg relative max-w-full sm:max-w-sm w-full mx-4">
                 <button
                   className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
                   onClick={() => setShowCalendarModal(false)}
@@ -156,7 +147,6 @@ function AdminAttendance() {
             </div>
           )}
 
-          {/* Attendance Table */}
           {loading ? (
             <div className="flex justify-center items-center py-16">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>

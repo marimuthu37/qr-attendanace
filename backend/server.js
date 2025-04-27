@@ -42,7 +42,6 @@ app.post('/check-user', (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        // course_code: user.course_code
       });
     } else {
       return res.json({ exists: false });
@@ -74,7 +73,6 @@ app.post('/manual-login', (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        // course_code: user.course_code
       }
     });
   });
@@ -82,23 +80,19 @@ app.post('/manual-login', (req, res) => {
 
 app.post("/create-session", async (req, res) => {
   const { facultyId} = req.body;
-  // const { facultyId, courseName } = req.body;
   const sessionId = `session-${Date.now()}`;
-  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
-  const createdAt = new Date();  // Store session creation time
-  const expiryTime = new Date(createdAt.getTime() + 10 * 3000);  // 30 seconds expiry
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); 
+  const createdAt = new Date(); 
+  const expiryTime = new Date(createdAt.getTime() + 10 * 3000); 
 
   try {
     const qrCodeDataUrl = await QRCode.toDataURL(sessionId);
 
     const query =
       "INSERT INTO sessions (session_id, faculty_id, qr_code_url, otp, created_at, expiry_time) VALUES ( ?, ?, ?, ?, ?, ?)";
-    // const query =
-    //   "INSERT INTO sessions (session_id, faculty_id, course_name, qr_code_url, otp, created_at, expiry_time) VALUES (?, ?, ?, ?, ?, ?, ?)";
     db.query(
       query,
-      [sessionId, facultyId,  qrCodeDataUrl, otp, createdAt, expiryTime], // Insert expiry_time as well
-      // [sessionId, facultyId, courseName, qrCodeDataUrl, otp, createdAt, expiryTime], // Insert expiry_time as well
+      [sessionId, facultyId,  qrCodeDataUrl, otp, createdAt, expiryTime], 
       (err, result) => {
         if (err) {
           console.error("Error creating session:", err);
@@ -109,7 +103,7 @@ app.post("/create-session", async (req, res) => {
           message: "Session created successfully",
           sessionId,
           qrCode: qrCodeDataUrl,
-          otp, // send OTP back to frontend
+          otp,
         });
       }
     );
@@ -121,36 +115,68 @@ app.post("/create-session", async (req, res) => {
 
 app.post("/mark-attendance", (req, res) => {
   const { sessionId, studentId } = req.body;
-  const timestamp = new Date(); // Current timestamp when marking attendance
+  const timestamp = new Date(); 
 
   if (!sessionId || !studentId) {
     return res.status(400).json({ message: "Missing session or student ID" });
   }
 
-  // Check if attendance has already been marked
-  const checkAttendance = "SELECT * FROM attendance WHERE session_id = ? AND student_id = ?";
-  db.query(checkAttendance, [sessionId, studentId], (err, results) => {
+  const minutesSinceMidnight = timestamp.getHours() * 60 + timestamp.getMinutes();
+
+  const periods = [
+    { start: 525, end: 575, label: "Period 1" },
+    { start: 575, end: 625, label: "Period 2" },
+    { start: 640, end: 690, label: "Period 3" },
+    { start: 690, end: 750, label: "Period 4" },
+    { start: 810, end: 860, label: "Period 5" },
+    { start: 860, end: 910, label: "Period 6" },
+    { start: 925, end: 990, label: "Period 7" },
+  ];
+
+  const currentPeriod = periods.find(
+    (period) => minutesSinceMidnight >= period.start && minutesSinceMidnight < period.end
+  );
+
+  if (!currentPeriod) {
+    return res.status(400).json({ message: "Attendance not allowed outside of defined periods" });
+  }
+
+  const checkAttendance = `
+    SELECT * FROM attendance 
+    WHERE student_id = ? AND timestamp BETWEEN ? AND ?
+  `;
+
+  const today = new Date();
+  today.setSeconds(0);
+  today.setMilliseconds(0);
+
+  const periodStart = new Date(today);
+  periodStart.setHours(Math.floor(currentPeriod.start / 60));
+  periodStart.setMinutes(currentPeriod.start % 60);
+
+  const periodEnd = new Date(today);
+  periodEnd.setHours(Math.floor(currentPeriod.end / 60));
+  periodEnd.setMinutes(currentPeriod.end % 60);
+
+  db.query(checkAttendance, [studentId, periodStart, periodEnd], (err, results) => {
     if (results.length > 0) {
-      return res.status(400).json({ message: "Attendance already marked" });
+      return res.status(400).json({ message: "Attendance already marked for this period" });
     }
 
-    // Check if session exists
     const checkSession = "SELECT * FROM sessions WHERE session_id = ?";
     db.query(checkSession, [sessionId], (err, sessions) => {
-      if (sessions.length === 0) return res.status(404).json({ message: "Session not found" });
+      if (sessions.length === 0) {
+        return res.status(404).json({ message: "Session not found" });
+      }
 
-      const { faculty_id, expiry_time } = sessions[0];
-      // const { faculty_id, course_name, expiry_time } = sessions[0];
-
-      // Compare the current timestamp with the session's expiry_time
+      const { expiry_time } = sessions[0];
       const sessionExpiryTime = new Date(expiry_time);
 
-      // If the current time is after the expiry time, return an error
       if (timestamp > sessionExpiryTime) {
         return res.status(400).json({ message: "Session has expired. Attendance cannot be marked" });
       }
 
-      // Insert attendance if session is valid and not expired
+      // Insert attendance
       const insert = "INSERT INTO attendance (session_id, student_id, timestamp) VALUES (?, ?, ?)";
       db.query(insert, [sessionId, studentId, timestamp], (err) => {
         if (err) return res.status(500).json({ message: "Failed to mark attendance" });
@@ -176,7 +202,6 @@ app.post("/verify-otp", (req, res) => {
   });
 });
 
-
 app.post("/get-attendence", (req, res) => {
   const { id } = req.body;
   console.log("Received /get-attendence call from:", req.body);
@@ -187,40 +212,44 @@ app.post("/get-attendence", (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const startDate = new Date("2025-04-24T00:00:00.000Z"); // UTC midnight
+    const formattedDate = startDate.toISOString().slice(0, 19).replace('T', ' ');
+
     const joinQuery = `
       SELECT a.timestamp, s.faculty_id
       FROM attendance a
       JOIN sessions s ON a.session_id = s.session_id
-      WHERE a.student_id = ?
+      WHERE a.student_id = ? AND a.timestamp >= ?
       ORDER BY a.timestamp DESC
     `;
-    // const joinQuery = `
-    //   SELECT a.timestamp, s.faculty_id, s.course_name
-    //   FROM attendance a
-    //   JOIN sessions s ON a.session_id = s.session_id
-    //   WHERE a.student_id = ?
-    //   ORDER BY a.timestamp DESC
-    // `;
 
-    db.query(joinQuery, [id], (err, results) => {
+    db.query(joinQuery, [id, formattedDate], (err, results) => {
       if (err) {
         console.error("Error fetching attendance:", err);
         return res.status(500).json({ message: "Attendance fetch failed" });
       }
 
-      if (results.length === 0) {
-        return res.status(404).json({ message: "No attendance records found" });
-      }
+      const totalDays = new Set(results.map(r => new Date(r.timestamp).toDateString())).size;
+      const periodsPerDay = 7;
+      const totalPeriods = totalDays * periodsPerDay;
+      const presentPeriods = results.length;
+      const absentPeriods = totalPeriods - presentPeriods;
+      const percentage = totalPeriods === 0 ? 0 : Math.round((presentPeriods / totalPeriods) * 100);
 
       res.status(200).json({
         records: results,
         username: userResult[0].username,
+        summary: {
+          present: presentPeriods,
+          absent: absentPeriods,
+          total: totalPeriods,
+          percentage,
+        },
       });
     });
   });
 });
 
-// In your Express server route
 app.post("/admin-attendance-records", (req, res) => {
   const { session_id } = req.body;
 
@@ -258,7 +287,6 @@ app.post("/admin-attendance-records", (req, res) => {
   });
 });
 
-
 app.post("/signup", (req, res) => {
     const { username, password, role } = req.body;
     const insertQuery = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
@@ -266,8 +294,7 @@ app.post("/signup", (req, res) => {
       if (err) return res.status(500).json({ message: "Signup failed" });
       res.status(200).json({ message: "Signup successful" });
     });
-  });
-  
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
